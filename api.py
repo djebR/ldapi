@@ -4,6 +4,7 @@ import os
 import errno
 import re
 
+
 # Function to make directories if they don't exist
 def openAndCreate(path):
     try:
