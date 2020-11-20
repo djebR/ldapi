@@ -2,7 +2,6 @@ import inspect
 import requests
 import os 
 import errno
-import re
 import sys
 
 # Function to make directories if they don't exist
@@ -52,27 +51,27 @@ for name, data in inspect.getmembers(rawo, inspect.isfunction):
     functions.append([name, sourceCode, argSpec])
     print(str(j) + " : " + name)
 
-functionNumber = input('Choose a function to be reified into RDF code: ')
+functionNumber = input('Choose a function to be reified into RDF code (zero to extract all): ')
 
 with openAndCreate("var/output.nt") as fpttl:
     rdfTurtle = ""
     i = 0
-    fName, fSource, fArgs = functions[int(functionNumber)-1]
-
-
-    rdfTurtle += f"ex:{fName.capitalize()+str(i)} rdfs:label '{fName}'^^xsd:string.\n"
-    rdfTurtle += f"ex:{fName.capitalize()+str(i)} func:code {repr(fSource)}^^xsd:string.\n"
-    for param in fArgs.parameters.values():
-        rdfTurtle += f"ex:{fName.capitalize()+str(i)} func:argument ex:{fName.capitalize()+str(i)+'_'+param.name}.\n"
-        rdfTurtle += f"ex:{fName.capitalize()+str(i)+'_'+param.name} rdfs:label '{param.name}'^^xsd:string.\n"
-        
-        # to do: add the type to the default value (if exist in xsd)
-        if(param.default is not param.empty):
-            rdfTurtle += f"ex:{fName.capitalize()+str(i)+'_'+param.name} func:defaultValue '{param.default}'.\n"
-        
-        # To do: map referenceable types instead of annotations (either existing or create)
-        if(param.annotation is not param.empty):
-            rdfTurtle += f"ex:{fName.capitalize()+str(i)+'_'+param.name} rdf:type '{param.annotation}'.\n"
+    
+    selectedFunctions = [functions[int(functionNumber)-1]] if functionNumber == '0' else functions
+    for fName, fSource, fArgs in selectedFunctions:
+        rdfTurtle += f"ex:{fName.capitalize()+str(i)} rdfs:label '{fName}'^^xsd:string.\n"
+        rdfTurtle += f"ex:{fName.capitalize()+str(i)} func:code {repr(fSource)}^^xsd:string.\n"
+        for param in fArgs.parameters.values():
+            rdfTurtle += f"ex:{fName.capitalize()+str(i)} func:argument ex:{fName.capitalize()+str(i)+'_'+param.name}.\n"
+            rdfTurtle += f"ex:{fName.capitalize()+str(i)+'_'+param.name} rdfs:label '{param.name}'^^xsd:string.\n"
+            
+            # to do: add the type to the default value (if exist in xsd)
+            if(param.default is not param.empty):
+                rdfTurtle += f"ex:{fName.capitalize()+str(i)+'_'+param.name} func:defaultValue '{param.default}'.\n"
+            
+            # To do: map referenceable types instead of annotations (either existing or create)
+            if(param.annotation is not param.empty):
+                rdfTurtle += f"ex:{fName.capitalize()+str(i)+'_'+param.name} rdf:type '{param.annotation}'.\n"
     fpttl.write(rdfTurtle)
     fpttl.close()
     print('RDF written successfully.')
